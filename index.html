@@ -1,7 +1,9 @@
-<html lang="zh-CN"><head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>爱的小测试</title>
+    <title>小咪海龟汤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
@@ -72,6 +74,9 @@
                 42% { transform: scale(1.1); }
                 70% { transform: scale(1); }
             }
+            .moving-btn {
+                transition: all 0.3s ease;
+            }
         }
     </style>
 </head>
@@ -103,8 +108,17 @@
             <div id="question-1" class="question active">
                 <h2 class="text-[clamp(1.5rem,5vw,2rem)] text-center font-bold text-gray-800 mb-8">你是最爱我的吗？</h2>
                 <div class="flex flex-col gap-4">
-                    <button onclick="nextQuestion(2)" class="btn-love">是</button>
+                    <button onclick="nextQuestion(4)" class="btn-love">是</button>
                     <button onclick="showQuestionWithMost(4)" class="btn-love">不是</button>
+                </div>
+            </div>
+            
+            <!-- 新增问题4: 这个海龟汤好不好玩 -->
+            <div id="question-4" class="question hidden">
+                <h2 class="text-[clamp(1.5rem,5vw,2rem)] text-center font-bold text-gray-800 mb-8">这个海龟汤好不好玩</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="nextQuestion(2)" class="btn-love">好玩</button>
+                    <button id="not-fun-btn" onmouseover="moveButton()" class="btn-love moving-btn">不好玩</button>
                 </div>
             </div>
             
@@ -121,7 +135,7 @@
             <div id="most-question-container" class="question hidden">
                 <h2 id="most-question-text" class="text-[clamp(1.5rem,5vw,2rem)] text-center font-bold text-gray-800 mb-8"></h2>
                 <div class="flex flex-col gap-4">
-                    <button onclick="nextQuestion(2)" class="btn-love">是</button>
+                    <button onclick="nextQuestion(4)" class="btn-love">是</button>
                     <button onclick="increaseMostCount()" class="btn-love">不是</button>
                 </div>
             </div>
@@ -130,7 +144,7 @@
     
     <!-- 底部信息 -->
     <div class="mt-8 text-center text-gray-600/70 text-sm z-10">
-        <p>用❤️制作的小测试</p>
+        <p>❤️ 用爱制作 ❤️</p>
     </div>
     
     <!-- 警告弹窗 - 请认真考虑 -->
@@ -139,7 +153,7 @@
             <div class="text-5xl text-primary mb-4">
                 <i class="fa fa-exclamation-circle"></i>
             </div>
-            <h3 class="text-xl font-bold mb-4">请认真考虑哦~</h3>
+            <h3 class="text-xl font-bold mb-4">再想想吧~</h3>
             <p class="text-gray-600 mb-6">再给你一次机会呀</p>
             <button onclick="closeWarning()" class="btn-love w-full">好的</button>
         </div>
@@ -172,6 +186,21 @@
     <script>
         // 跟踪"最"字的数量
         let mostCount = 4;
+        // 获取问题容器尺寸，用于移动按钮
+        let containerRect;
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            // 初始显示第一个问题
+            nextQuestion(1);
+            // 获取容器尺寸
+            containerRect = document.getElementById('question-container').getBoundingClientRect();
+        });
+        
+        // 窗口大小变化时重新获取容器尺寸
+        window.addEventListener('resize', () => {
+            containerRect = document.getElementById('question-container').getBoundingClientRect();
+        });
         
         // 切换问题
         function nextQuestion(questionNumber) {
@@ -192,6 +221,9 @@
             setTimeout(() => {
                 container.classList.remove('scale-95');
             }, 200);
+            
+            // 更新容器尺寸
+            containerRect = container.getBoundingClientRect();
         }
         
         // 显示带有特定数量"最"字的问题
@@ -219,6 +251,9 @@
             setTimeout(() => {
                 container.classList.remove('scale-95');
             }, 200);
+            
+            // 更新容器尺寸
+            containerRect = container.getBoundingClientRect();
         }
         
         // 增加"最"字数量并显示新问题
@@ -230,6 +265,25 @@
             if (mostCount > 8) {
                 setTimeout(showWarning, 300);
             }
+        }
+        
+        // 移动"不好玩"按钮
+        function moveButton() {
+            const btn = document.getElementById('not-fun-btn');
+            const btnRect = btn.getBoundingClientRect();
+            
+            // 计算按钮可移动的范围（避免移出问题卡片）
+            const maxX = containerRect.width - btnRect.width - 40; // 减去内边距
+            const maxY = containerRect.height - btnRect.height - 140; // 减去其他内容高度
+            
+            // 生成随机位置
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+            
+            // 应用新位置
+            btn.style.position = 'relative';
+            btn.style.left = `${randomX}px`;
+            btn.style.top = `${randomY}px`;
         }
         
         // 显示警告弹窗 - 请认真考虑
@@ -264,6 +318,12 @@
             // 重置最字计数
             mostCount = 4;
             
+            // 重置按钮位置
+            const btn = document.getElementById('not-fun-btn');
+            btn.style.position = 'static';
+            btn.style.left = '0';
+            btn.style.top = '0';
+            
             // 隐藏所有弹窗
             document.getElementById('warning-modal').classList.add('hidden');
             document.getElementById('plead-modal').classList.add('hidden');
@@ -272,13 +332,6 @@
             // 回到第一个问题
             nextQuestion(1);
         }
-        
-        // 页面加载完成后初始化
-        window.addEventListener('load', () => {
-            // 初始显示第一个问题
-            nextQuestion(1);
-        });
     </script>
-
-
-</body></html>
+</body>
+</html>
