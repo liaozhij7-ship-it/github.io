@@ -1,0 +1,284 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱的小测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF7AA2',
+                        secondary: '#FF9FB2',
+                        light: '#FFE6EC',
+                        dark: '#FF577F'
+                    },
+                    fontFamily: {
+                        cute: ['"Comic Sans MS"', '"Marker Felt"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .bg-gradient-love {
+                background: linear-gradient(135deg, #FFE6EC 0%, #FF9FB2 100%);
+            }
+            .btn-love {
+                @apply bg-primary hover:bg-dark text-white font-bold py-3 px-8 rounded-full 
+                       shadow-lg transform transition duration-300 hover:scale-105 
+                       active:scale-95 focus:outline-none focus:ring-2 focus:ring-dark;
+            }
+            .question-card {
+                @apply bg-white/80 backdrop-blur-sm rounded-3xl p-6 shadow-xl 
+                       transform transition-all duration-500 max-w-md w-full mx-auto;
+            }
+            .floating {
+                animation: floating 3s ease-in-out infinite;
+            }
+            @keyframes floating {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-15px); }
+                100% { transform: translateY(0px); }
+            }
+            .bounce-in {
+                animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            @keyframes bounceIn {
+                0% { transform: scale(0.3); opacity: 0; }
+                50% { transform: scale(1.05); }
+                70% { transform: scale(0.9); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .pop-up {
+                animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            @keyframes popUp {
+                0% { transform: scale(0); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .heart-beat {
+                animation: heartBeat 1.5s ease-in-out infinite;
+            }
+            @keyframes heartBeat {
+                0% { transform: scale(1); }
+                14% { transform: scale(1.1); }
+                28% { transform: scale(1); }
+                42% { transform: scale(1.1); }
+                70% { transform: scale(1); }
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-love font-cute flex flex-col items-center justify-between p-4 py-8 overflow-hidden">
+    <!-- 装饰元素 -->
+    <div class="absolute top-10 left-5 text-primary/50 text-4xl floating">
+        <i class="fa fa-heart"></i>
+    </div>
+    <div class="absolute top-20 right-8 text-primary/40 text-3xl floating" style="animation-delay: 0.5s">
+        <i class="fa fa-heart"></i>
+    </div>
+    <div class="absolute bottom-20 left-10 text-primary/30 text-2xl floating" style="animation-delay: 1s">
+        <i class="fa fa-heart"></i>
+    </div>
+    <div class="absolute bottom-40 right-5 text-primary/60 text-xl floating" style="animation-delay: 1.5s">
+        <i class="fa fa-heart"></i>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex flex-col items-center justify-center flex-grow w-full z-10">
+        <!-- 卡通人物图片 -->
+        <div class="mb-8 bounce-in">
+            <img src="https://p3-search.byteimg.com/obj/labis/644b9dcd70b6426be628774292dafc62" alt="小八比爱心的卡通形象" class="w-40 h-40 object-contain rounded-full border-4 border-primary/30 p-2 bg-white/50 shadow-lg heart-beat">
+        </div>
+        
+        <!-- 问题卡片 -->
+        <div id="question-container" class="question-card bounce-in">
+            <!-- 问题1: 你是最爱我的吗？ -->
+            <div id="question-1" class="question active">
+                <h2 class="text-[clamp(1.5rem,5vw,2rem)] text-center font-bold text-gray-800 mb-8">你是最爱我的吗？</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="nextQuestion(2)" class="btn-love">是</button>
+                    <button onclick="showQuestionWithMost(4)" class="btn-love">不是</button>
+                </div>
+            </div>
+            
+            <!-- 问题2: 这次算一个惊喜行不行 -->
+            <div id="question-2" class="question hidden">
+                <h2 class="text-[clamp(1.5rem,5vw,2rem)] text-center font-bold text-gray-800 mb-8">这次算一个惊喜行不行</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="showResult(true)" class="btn-love">行</button>
+                    <button onclick="showPleadModal()" class="btn-love">不行</button>
+                </div>
+            </div>
+            
+            <!-- 动态生成的"最"字问题容器 -->
+            <div id="most-question-container" class="question hidden">
+                <h2 id="most-question-text" class="text-[clamp(1.5rem,5vw,2rem)] text-center font-bold text-gray-800 mb-8"></h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="nextQuestion(2)" class="btn-love">是</button>
+                    <button onclick="increaseMostCount()" class="btn-love">不是</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部信息 -->
+    <div class="mt-8 text-center text-gray-600/70 text-sm z-10">
+        <p>用❤️制作的小测试</p>
+    </div>
+    
+    <!-- 警告弹窗 - 请认真考虑 -->
+    <div id="warning-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-xs w-full text-center pop-up">
+            <div class="text-5xl text-primary mb-4">
+                <i class="fa fa-exclamation-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">请认真考虑哦~</h3>
+            <p class="text-gray-600 mb-6">再给你一次机会呀</p>
+            <button onclick="closeWarning()" class="btn-love w-full">好的</button>
+        </div>
+    </div>
+    
+    <!-- 恳求弹窗 - 求求你了，小咪宝宝 -->
+    <div id="plead-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-xs w-full text-center pop-up">
+            <div class="text-5xl text-primary mb-4">
+                <i class="fa fa-heart"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">求求你了~</h3>
+            <p class="text-gray-600 mb-6">小咪宝宝，就答应我吧~</p>
+            <button onclick="closePleadModal()" class="btn-love w-full">好吧</button>
+        </div>
+    </div>
+    
+    <!-- 结果弹窗 - 接受 -->
+    <div id="accept-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center pop-up">
+            <div class="text-6xl text-primary mb-4 heart-beat">
+                <i class="fa fa-heart"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">太好了！</h3>
+            <p class="text-gray-600 mb-6">我就知道你会答应的~ 爱你哟！</p>
+            <button onclick="restartGame()" class="btn-love w-full">再来一次</button>
+        </div>
+    </div>
+
+    <script>
+        // 跟踪"最"字的数量
+        let mostCount = 4;
+        
+        // 切换问题
+        function nextQuestion(questionNumber) {
+            // 隐藏所有问题
+            document.querySelectorAll('.question').forEach(question => {
+                question.classList.add('hidden');
+                question.classList.remove('active');
+            });
+            
+            // 显示目标问题并添加动画
+            const targetQuestion = document.getElementById(`question-${questionNumber}`);
+            targetQuestion.classList.remove('hidden');
+            targetQuestion.classList.add('active', 'bounce-in');
+            
+            // 轻微震动效果
+            const container = document.getElementById('question-container');
+            container.classList.add('scale-95');
+            setTimeout(() => {
+                container.classList.remove('scale-95');
+            }, 200);
+        }
+        
+        // 显示带有特定数量"最"字的问题
+        function showQuestionWithMost(count) {
+            mostCount = count;
+            
+            // 隐藏所有问题
+            document.querySelectorAll('.question').forEach(question => {
+                question.classList.add('hidden');
+                question.classList.remove('active');
+            });
+            
+            // 更新问题文本
+            const mostText = '最'.repeat(mostCount);
+            document.getElementById('most-question-text').textContent = `那你是${mostText}爱我的吗`;
+            
+            // 显示动态问题
+            const targetQuestion = document.getElementById('most-question-container');
+            targetQuestion.classList.remove('hidden');
+            targetQuestion.classList.add('active', 'bounce-in');
+            
+            // 轻微震动效果
+            const container = document.getElementById('question-container');
+            container.classList.add('scale-95');
+            setTimeout(() => {
+                container.classList.remove('scale-95');
+            }, 200);
+        }
+        
+        // 增加"最"字数量并显示新问题
+        function increaseMostCount() {
+            mostCount++;
+            showQuestionWithMost(mostCount);
+            
+            // 当"最"字达到一定数量时，显示提示
+            if (mostCount > 8) {
+                setTimeout(showWarning, 300);
+            }
+        }
+        
+        // 显示警告弹窗 - 请认真考虑
+        function showWarning() {
+            document.getElementById('warning-modal').classList.remove('hidden');
+        }
+        
+        // 关闭警告弹窗
+        function closeWarning() {
+            document.getElementById('warning-modal').classList.add('hidden');
+        }
+        
+        // 显示恳求弹窗 - 求求你了，小咪宝宝
+        function showPleadModal() {
+            document.getElementById('plead-modal').classList.remove('hidden');
+        }
+        
+        // 关闭恳求弹窗
+        function closePleadModal() {
+            document.getElementById('plead-modal').classList.add('hidden');
+        }
+        
+        // 显示结果
+        function showResult(accepted) {
+            if (accepted) {
+                document.getElementById('accept-modal').classList.remove('hidden');
+            }
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            // 重置最字计数
+            mostCount = 4;
+            
+            // 隐藏所有弹窗
+            document.getElementById('warning-modal').classList.add('hidden');
+            document.getElementById('plead-modal').classList.add('hidden');
+            document.getElementById('accept-modal').classList.add('hidden');
+            
+            // 回到第一个问题
+            nextQuestion(1);
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            // 初始显示第一个问题
+            nextQuestion(1);
+        });
+    </script>
+
+
+</body></html>
