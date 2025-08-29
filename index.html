@@ -54,6 +54,12 @@
             .dog-shrink {
                 animation: dogShrink 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
             }
+            .dog-grow {
+                animation: dogGrow 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+            }
+            .score-reset {
+                animation: scoreReset 0.5s ease-in-out;
+            }
         }
         
         @keyframes pawBounce {
@@ -62,8 +68,8 @@
         }
         
         @keyframes scorePopup {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px); }
+            0%, 100% { opacity: 0; transform: translateY(-50px); }
+            50% { opacity: 1; transform: translateY(0); }
         }
         
         @keyframes dogBounce {
@@ -103,6 +109,29 @@
                 filter: brightness(1);
             }
         }
+        
+        /* 小狗恢复大小动画 */
+        @keyframes dogGrow {
+            0% { 
+                transform: translate(-50%, -50%) scale(var(--current-scale)) rotate(0deg);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.1) rotate(3deg);
+                filter: brightness(1.1);
+            }
+            100% { 
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                filter: brightness(1);
+            }
+        }
+        
+        /* 分数重置动画 */
+        @keyframes scoreReset {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #EF4444; }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-amber-50 to-orange-100 min-h-screen font-game text-neutral flex flex-col items-center justify-between p-4 md:p-8">
@@ -113,10 +142,18 @@
         </h1>
     </header>
     
-    <!-- 分数显示 -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg mb-6 border border-gray-200 z-10">
-        <span class="text-gray-600 mr-2">当前分数:</span>
-        <span id="score" class="text-2xl font-bold text-primary">0</span>
+    <!-- 分数显示和控制按钮 -->
+    <div class="flex flex-wrap items-center justify-center gap-4 bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg mb-6 border border-gray-200 z-10 w-full max-w-md">
+        <div>
+            <span class="text-gray-600 mr-2">当前分数:</span>
+            <span id="score" class="text-2xl font-bold text-primary">0</span>
+        </div>
+        
+        <!-- 复原小狗大小按钮 -->
+        <button id="resetDogBtn" class="ml-4 bg-primary hover:bg-primary/90 text-white rounded-full px-4 py-1.5 shadow transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-1">
+            <i class="fa fa-refresh"></i>
+            <span>复原小狗</span>
+        </button>
     </div>
     
     <!-- 游戏主区域 -->
@@ -155,13 +192,6 @@
         <div id="scorePopup" class="absolute pointer-events-none opacity-0 text-2xl font-bold z-40"></div>
     </main>
     
-    <footer class="w-full max-w-2xl bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md text-center">
-        <p class="text-gray-600">
-            选择下方工具后，移动到小狗身上点击或触摸<br>
-            <span class="text-danger"><i class="fa fa-hammer"></i> 锤子: 扣10分，小狗会持续变小</span> | 
-            <span class="text-success"><i class="fa fa-hand-paper-o"></i> 手掌: 加1分，会出现爱心</span>
-        </p>
-    </footer>
     
     <script>
         // 游戏状态变量
@@ -170,7 +200,6 @@
             score: 0,
             dogScale: 1, // 跟踪小狗当前的缩放比例
             minScale: 0.4, // 小狗最小缩放比例限制
-            // 存储锤子图像URL，确保所有地方使用相同的图像
             hammerImageUrl: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/34132f33295946c2983e7cb0d6da6f92~tplv-a9rns2rl98-image.image?rcl=20250828184527079B5C47B3CCA55CD4A7&amp;rk3s=8e244e95&amp;rrcfp=2609e108&amp;x-expires=1756982730&amp;x-signature=AcGSPasFWdm9c5okivDTjxupy4E%3D'
         };
         
@@ -183,6 +212,7 @@
         const movingTool = document.getElementById('movingTool');
         const gameArea = document.querySelector('main');
         const heartsContainer = document.getElementById('heartsContainer');
+        const resetDogBtn = document.getElementById('resetDogBtn');
         
         // 更新分数显示
         function updateScore(points) {
@@ -191,19 +221,46 @@
             showScorePopup(points);
         }
         
+        // 重置分数为0
+        function resetScore() {
+            const previousScore = gameState.score;
+            gameState.score = 0;
+            
+            // 添加分数重置动画
+            scoreElement.classList.add('score-reset');
+            scoreElement.textContent = '0';
+            
+            // 移除动画类，以便下次可以重新触发
+            setTimeout(() => {
+                scoreElement.classList.remove('score-reset');
+            }, 500);
+            
+            return previousScore;
+        }
+        
         // 显示分数弹出动画
         function showScorePopup(points) {
-            const sign = points > 0 ? '+' : '';
-            const color = points > 0 ? 'text-success' : 'text-danger';
+            let text, color;
             
-            scorePopup.textContent = `${sign}${points}`;
+            if (points === 'reset') {
+                text = '分数已重置';
+                color = 'text-primary';
+            } else {
+                const sign = points > 0 ? '+' : '';
+                color = points > 0 ? 'text-success' : 'text-danger';
+                text = `${sign}${points}`;
+            }
+            
+            scorePopup.textContent = text;
             scorePopup.className = `absolute pointer-events-none text-2xl font-bold ${color} score-popup`;
             
-            const dogRect = dogElement.getBoundingClientRect();
+            // 确定提示显示位置
+            const targetElement = points === 'reset' ? resetDogBtn : dogElement;
+            const rect = targetElement.getBoundingClientRect();
             const gameRect = gameArea.getBoundingClientRect();
             
-            scorePopup.style.left = `${dogRect.left - gameRect.left + dogRect.width/2}px`;
-            scorePopup.style.top = `${dogRect.top - gameRect.top - 30}px`;
+            scorePopup.style.left = `${rect.left - gameRect.left + rect.width/2}px`;
+            scorePopup.style.top = `${rect.top - gameRect.top - 30}px`;
             scorePopup.style.transform = 'translate(-50%, 0)';
             
             // 重置动画
@@ -250,7 +307,6 @@
                 hammerTool.classList.remove('bg-white');
                 handTool.classList.add('bg-white');
                 handTool.classList.remove('bg-primary/10');
-                // 使用统一的锤子图像URL
                 movingTool.innerHTML = `<img src="${gameState.hammerImageUrl}" alt="卡通锤子工具" class="w-12 h-12 md:w-16 md:h-16 object-contain tool-shadow">`;
             } else {
                 handTool.classList.add('bg-primary/10');
@@ -269,46 +325,68 @@
                 
                 // 计算新的缩放比例，不小于最小限制
                 gameState.dogScale = Math.max(gameState.dogScale * 0.85, gameState.minScale);
+                dogElement.style.setProperty('--current-scale', gameState.dogScale);
                 
                 // 设置动画和最终缩放比例
                 dogElement.style.setProperty('--final-scale', gameState.dogScale);
                 
                 // 移除并重新添加动画类以重置动画
-                dogElement.classList.remove('dog-shrink');
+                dogElement.classList.remove('dog-shrink', 'dog-grow');
                 void dogElement.offsetWidth; // 触发重绘
                 dogElement.classList.add('dog-shrink');
                 
-                // 应用新的缩放比例
-                setTimeout(() => {
-                    dogElement.style.transform = `translate(-50%, -50%) scale(${gameState.dogScale})`;
-                }, 500);
-                
-                // 锤子击打动画 - 使用相同的锤子图像
+                // 锤子击打动画
                 movingTool.classList.add('scale-125', 'rotate-12');
                 setTimeout(() => {
                     movingTool.classList.remove('scale-125', 'rotate-12');
                 }, 150);
             } else {
-                // 手掌：加分（改为加1分），散发爱心，小狗略微变大
-                updateScore(1);  // 这里从10分改为1分
+                // 手掌：加分，散发爱心，小狗略微变大
+                updateScore(1);
                 createHearts();
                 
-                // 抚摸时让小狗略微变大（调整幅度，因为得分降低了）
-                gameState.dogScale = Math.min(gameState.dogScale * 1.03, 1.2);  // 调整了放大比例
+                // 抚摸时让小狗略微变大
+                gameState.dogScale = Math.min(gameState.dogScale * 1.03, 1.2);
+                dogElement.style.setProperty('--current-scale', gameState.dogScale);
                 dogElement.style.transform = `translate(-50%, -50%) scale(${gameState.dogScale})`;
                 
                 // 小狗被抚摸的动画
-                dogElement.classList.add('scale-105', 'rotate-0');  // 调整了动画幅度
+                dogElement.classList.remove('dog-shrink', 'dog-grow');
+                dogElement.classList.add('scale-105', 'rotate-0');
                 setTimeout(() => {
                     dogElement.classList.remove('scale-105', 'rotate-0');
                 }, 200);
                 
                 // 手掌抚摸动画
-                movingTool.classList.add('scale-105');  // 调整了动画幅度
+                movingTool.classList.add('scale-105');
                 setTimeout(() => {
                     movingTool.classList.remove('scale-105');
                 }, 150);
             }
+        }
+        
+        // 复原小狗大小并重置分数
+        function resetDogAndScore() {
+            // 重置小狗大小并添加动画
+            gameState.dogScale = 1;
+            dogElement.style.setProperty('--current-scale', 1);
+            
+            // 移除其他动画，添加恢复动画
+            dogElement.classList.remove('dog-shrink', 'scale-105', 'rotate-0');
+            void dogElement.offsetWidth; // 触发重绘
+            dogElement.classList.add('dog-grow');
+            
+            // 重置分数
+            resetScore();
+            
+            // 显示复原和分数重置提示
+            showScorePopup('reset');
+            
+            // 动画结束后确保小狗回到正确状态
+            setTimeout(() => {
+                dogElement.classList.remove('dog-grow');
+                dogElement.style.transform = `translate(-50%, -50%) scale(1)`;
+            }, 800);
         }
         
         // 移动工具图标
@@ -329,6 +407,7 @@
         // 事件监听
         hammerTool.addEventListener('click', () => switchTool('hammer'));
         handTool.addEventListener('click', () => switchTool('hand'));
+        resetDogBtn.addEventListener('click', resetDogAndScore); // 点击时同时复原小狗和重置分数
         
         gameArea.addEventListener('mousemove', (e) => {
             const rect = gameArea.getBoundingClientRect();
